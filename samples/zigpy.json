@@ -1,0 +1,68 @@
+{
+    "version": 2,
+    "backup_time": "2024-10-17T18:29:58.409890+00:00",
+    "source": {
+        "software": "bellows",
+        "version": "0.41.0"
+    },
+    "network_info": {
+        "extended_pan_id": "fe:ed:fa:ce:de:ad:be:ef",
+        "pan_id": "AB23",
+        "nwk_update_id": 2,
+        "nwk_manager_id": "0000",
+        "channel": 25,
+        "channel_mask": [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+        "security_level": 5,
+        "network_key": {
+            "key": "fa:88:59:74:89:fd:ac:d0:79:fb:31:9b:5c:1b:cc:82",
+            "tx_counter": 10741222,
+            "rx_counter": 0,
+            "seq": 0,
+            "partner_ieee": "00:12:4b:00:1c:ab:cd:ef"
+        },
+        "tc_link_key": {
+            "key": "5a:69:67:42:65:65:41:6c:6c:69:61:6e:63:65:30:39",
+            "tx_counter": 0,
+            "rx_counter": 0,
+        },
+        "key_table": [
+            {
+                "ieee": "b0:ce:18:14:03:0a:b8:27",
+                "key": "1a:2b:3c:4d:5e:6f:70:81:92:a3:b4:c5:d6:e7:f8:09",
+                "tx_counter": 1234,
+                "rx_counter": 5678
+            }
+        ],
+    },
+    "node_info": {
+        "nwk": "0000",
+        "ieee": "00:12:4b:00:1c:ab:cd:ef",
+        "logical_type": "coordinator",
+        "model": "Yellow v1.2",
+        "manufacturer": "Nabu Casa",
+        "version": "7.4.4.0 build 0"
+    },
+    "__devices_comment": "It is completely normal for this section to be empty or contain only a few devices! The coordinator doesn't need to keep track of every device on a network.",
+    "children": [
+        "28:2c:02:bf:ff:eb:ae:b4",
+        "28:2c:02:bf:ff:eb:ae:fe"
+    ],
+    "nwk_addresses": {
+        "b0:ce:18:14:03:0a:b8:27": "7F9C",
+        "b0:ce:18:14:03:3a:9b:48": "CAC7",
+        "28:2c:02:bf:ff:eb:ae:b4": "46C0",
+        "28:2c:02:bf:ff:eb:ae:fe": "0692"
+    },
+    "stack_specific": {
+        "ezsp": {
+            "hashed_tclk": "67:b5:84:33:c6:ef:f2:49:ef:6a:2f:66:a3:61:84:53"
+        }
+    },
+    "metadata": {
+        "ezsp": {
+            "stack_version": 13,
+            "can_burn_userdata_custom_eui64": false,
+            "can_rewrite_custom_eui64": true
+        }
+    }
+}
