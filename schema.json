@@ -1,82 +1,241 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://github.com/zigpy/open-coordinator-backup/schema.json",
-
     "type": "object",
     "properties": {
-        "metadata": {
+        "version": {
+            "type": "integer",
+            "const": 2
+        },
+        "backup_time": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "network_info": {
             "type": "object",
             "properties": {
-                "format": {"type": "string", "pattern": "^zigpy/open-coordinator-backup$"},
-                "version": {"type": "integer", "minimum": 1, "maximum": 1},
-                "source": {"type": "string", "pattern": "^(.*?)+@(.*?)$"},
-                "internal": {"type": "object"}
-            },
-            "required": ["version", "source"]
-        },
-
-        "stack_specific": {
-            "type": "object",
-            "properties": {
-                "zstack": {
-                    "type": "object",
-                    "properties": {
-                        "tclk_seed": {"type": "string", "pattern": "[a-fA-F0-9]{32}"}
-                    }
-                }
-            }
-        },
-        "coordinator_ieee": {"type": "string", "pattern": "[a-fA-F0-9]{16}"},
-        "pan_id": {"type": "string", "pattern": "[a-fA-F0-9]{4}"},
-        "extended_pan_id": {"type": "string", "pattern": "[a-fA-F0-9]{16}"},
-        "nwk_update_id": {"type": "integer", "minimum": 0, "maximum": 255},
-        "security_level": {"type": "integer", "minimum": 0, "maximum": 7},
-        "channel": {"type": "integer", "minimum": 11, "maximum": 26},
-        "channel_mask": {
-            "type": "array",
-            "items": {"type": "integer", "minimum": 11, "maximum": 26}
-        },
-        "network_key": {
-            "type": "object",
-            "properties": {
-                "key": {"type": "string", "pattern": "[a-fA-F0-9]{32}"},
-                "sequence_number": {"type": "integer", "minimum": 0, "maximum": 255},
-                "frame_counter": {"type": "integer", "minimum": 0, "maximum": 4294967295}
-            },
-            "required": ["key", "sequence_number", "frame_counter"]
-        },
-        "devices": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "nwk_address": {"type": ["string", "null"], "pattern": "[a-fA-F0-9]{4}"},
-                    "ieee_address": {"type": "string", "pattern": "[a-fA-F0-9]{16}"},
-                    "is_child": {"type": "boolean"},
-                    "link_key": {
-                        "type": "object",
-                        "properties": {
-                            "key": {"type": "string", "pattern": "[a-fA-F0-9]{16}"},
-                            "tx_counter": {"type": "integer", "minimum": 0, "maximum": 4294967295},
-                            "rx_counter": {"type": "integer", "minimum": 0, "maximum": 4294967295}
-                        },
-                        "required": ["key", "tx_counter", "rx_counter"]
+                "extended_pan_id": {
+                    "type": "string",
+                    "pattern": "^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$"
+                },
+                "pan_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{4}$"
+                },
+                "nwk_update_id": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                },
+                "nwk_manager_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{4}$"
+                },
+                "channel": {
+                    "type": "integer",
+                    "minimum": 11,
+                    "maximum": 26
+                },
+                "channel_mask": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 11,
+                        "maximum": 26
                     }
                 },
-                "required": ["nwk_address", "ieee_address"]
+                "security_level": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 7
+                },
+                "network_key": {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "pattern": "^([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}$"
+                        },
+                        "tx_counter": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                        },
+                        "rx_counter": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                        },
+                        "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255
+                        }
+                    },
+                    "required": ["key", "tx_counter", "rx_counter", "sequence"],
+                    "additionalProperties": false
+                },
+                "tc_link_key": {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "pattern": "^([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}$"
+                        },
+                        "tx_counter": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                        },
+                        "rx_counter": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                        }
+                    },
+                    "required": ["key", "tx_counter", "rx_counter"],
+                    "additionalProperties": false
+                },
+                "key_table": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "string",
+                                "pattern": "^([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}$"
+                            },
+                            "tx_counter": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 4294967295
+                            },
+                            "rx_counter": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 4294967295
+                            },
+                            "sequence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                            },
+                            "partner_ieee": {
+                                "type": "string",
+                                "pattern": "^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$"
+                            },
+                            "additionalProperties": false
+                        },
+                        "required": ["key", "tx_counter", "rx_counter", "sequence", "partner_ieee"]
+                    }
+                },
+                "__devices_comment": {
+                    "type": "string",
+                    "const": "It is completely normal for this section to be empty or contain only a few devices! The coordinator doesn't need to keep track of every device on a network."
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$"
+                    }
+                },
+                "nwk_addresses": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F]{4}$"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "required": [
+                "extended_pan_id",
+                "pan_id",
+                "nwk_update_id",
+                "nwk_manager_id",
+                "channel",
+                "channel_mask",
+                "security_level",
+                "network_key",
+                "tc_link_key",
+                "key_table",
+                "children",
+                "nwk_addresses"
+            ],
+            "additionalProperties": false
+        },
+        "node_info": {
+            "type": "object",
+            "properties": {
+                "nwk": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{4}$"
+                },
+                "ieee": {
+                    "type": "string",
+                    "pattern": "^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$"
+                },
+                "logical_type": {
+                    "type": "string",
+                    "enum": ["coordinator", "router", "end_device"]
+                },
+                "model": {
+                    "type": ["string", "null"]
+                },
+                "manufacturer": {
+                    "type": ["string", "null"]
+                },
+                "version": {
+                    "type": ["string", "null"]
+                }
+            },
+            "required": ["nwk", "ieee", "logical_type", "model", "manufacturer", "version"],
+            "additionalProperties": false
+        }
+    },
+    "stack_specific": {
+        "type": "object",
+        "properties": {
+            "ezsp": {
+                "type": "object",
+                "properties": {
+                    "hashed_tclk": {
+                        "type": "string",
+                        "pattern": "^([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}$"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "znp": {
+                "type": "object",
+                "properties": {
+                    "tclk_seed": {
+                        "type": "string",
+                        "pattern": "^([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}$"
+                    }
+                },
+                "additionalProperties": false
             }
         }
     },
-    "required": [
-        "metadata",
-        "coordinator_ieee",
-        "pan_id",
-        "extended_pan_id",
-        "nwk_update_id",
-        "security_level",
-        "channel",
-        "channel_mask",
-        "network_key",
-        "devices"
-    ]
+    "source": {
+        "type": "object",
+        "properties": {
+            "software": {
+                "type": "string"
+            },
+            "version": {
+                "type": "string"
+            }
+        },
+        "additionalProperties": false
+    },
+    "metadata": {
+        "type": "object"
+    },
+    "required": ["version", "backup_time", "network_info", "node_info", "metadata", "source", "stack_specific"],
+    "additionalProperties": false
 }

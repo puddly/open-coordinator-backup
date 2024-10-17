@@ -1,121 +1,173 @@
-# Open ZigBee Coordinator Backup Format
-An ongoing specification for a JSON Zigee coordinator backup format as a hardware-independent non-proprietary open standard.
+# Open Zigbee Network Backup Format
+Primarily used for backing up coordinator information and storing Zigbee network information on-disk.
 
-## Rationale
-The primary use case for this specification is to provide a simple standard for exporting
-ZigBee network information to disk. Standardizing this format will allowing users to
-backup, restore, and migrate their networks between coordinator hardware and network
-management software without having to needlessly rejoin all of their devices to a new network.
-
-## Implementation adoption
-
-This Open ZigBee Coordinator Backup Format has so far been adopted by several popular open source home automation projects, including [zigpy](https://github.com/zigpy/zigpy) (Zigbee library used by [Home Assistant](https://www.home-assistant.io/) and [Jeedom](https://www.jeedom.com/)) and [zigbee-herdsman](https://github.com/Koenkk/zigbee-herdsman) (Zigbee library used by [Zigbee2MQTT](https://www.zigbee2mqtt.io/) and [IoBroker](https://www.iobroker.net/)).
-
-## Provisional Specification
-JSON is both human-readable supported well by common programming languages, making it a
-good fit for files that will be interpreted by both.
-
-
-### Encoding Sequences of Bytes
-JSON does not natively support sequences of bytes (`char[]`, `Buffer`, bytestrings, etc.), therefore an intermediate representation is necessary.
-
-Sequences of bytes will be encoded as a case-insensitive string of each
-byte's hex representation, with leading zeroes, concatenated together. For example,
-`\x0A\xBB\xC0` will be represented as `"0abbc0"`.
-
-Different platforms may internally use different byte ordering (big endian, little endian). All binary sequences in this format need to be stored **MSB-LSB (big endian)**. For example, IEEE addresses are represented within Z-Stack LSB-MSB (little endian), therefore address `00:12:4b:00:06:10:4e:22` would be internally stored as `22:4e:10:06:00:4b:12:00`. For purposes of this specification the address needs to be reversed and converted to specified byte array representation form - `00124b0006104e22`.
+## Adoption
+Versions of the Open Zigbee Network Backup Format have been adopted by several popular open source home automation projects, including [zigpy](https://github.com/zigpy/zigpy), and [zigbee-herdsman](https://github.com/Koenkk/zigbee-herdsman) (Zigbee library used by [Zigbee2MQTT](https://www.zigbee2mqtt.io/) and [IoBroker](https://www.iobroker.net/)).
 
 ## Backup Structure
-The generated backup is a JSON document with the following top-level keys:
-* `metadata`: *object*,
-* `stack_specific`: *object*,
-* `coordinator_ieee`: *string*,
-* `pan_id`: *string*,
-* `extended_pan_id`: *string*,
-* `channel`: *number*,
-* `channel_mask`: *number[]*,
-* `security_level`: *number*,
-* `nwk_update_id`: *number*,
-* `network_key`: *object*,
-* `devices`: *object[]*.
+The backup format is a JSON document with the following properties, aiming to be both machine- and human-readable:
 
-### `metadata`
-The top-level `metadata` object contains basic information about the backup itself:
-* `format`: *string* - needs to be set to `zigpy/open-coordinator-backup`,
-* `version`: *number* - specifier that will be incremented upon major specification
- changes that will require migration or introduce new keys. The current value is `1`,
-* `source`: *string* - describes the application or package generating the file. This value will be the name of the package, followed by a literal `@`, then the version identifier of the generating package. For example, `zigpy-znp@0.3.1` or `zigbee-herdsman@d12727f3`. The purpose of this key is to uniquely identify the application generating the backup format and potentially work around bugs introduced in specific versions,
-* `internal`: *object* - arbitrary-structure object that can be used by the generating application to store any other useful non-network information. For the purposes of interoperability, it is not recommended to store any critical network information, for example stack-specific settings, in this object. Use the top-level `stack_specific` key with the appropriate sub-object for the stack.
+### `version`
+The document version, currently `2`.  
+*Mandatory value: `2`*
+
+### `backup_time`
+An ISO 8601 formatted string representing the time the backup was created.  
+*Example value: `"2024-10-17T18:29:58.409890+00:00"`*
+
+### `network_info`
+Top-level property holding information about the joined/formed Zigbee network.
+
+#### `network_info.extended_pan_id`
+The 64-bit Extended Personal Area Network Identifier (EPID).  
+*Example value: `"00:21:2e:ff:ff:aa:bb:cc"`*
+
+#### `network_info.pan_id`
+The 16-bit Personal Area Network Identifier (PAN ID), big-endian encoded.  
+*Example value: `"1234"`*
+
+#### `network_info.nwk_update_id`
+The network update identifier, a number between 0 and 255.  
+*Example value: `1`*
+
+#### `network_info.nwk_manager_id`
+The 16-bit network address of the network manager, big-endian encoded. Usually just `"0000"`.  
+*Example value: `"0000"`*
+
+#### `network_info.channel`
+The current logical channel of the network.  
+*Example value: `11`*
+
+#### `network_info.channel_mask`
+The logical channels on which the network can exist. Coordinators do not utilize this information.  
+*Example value: `[11, 15, 20]`*
+
+#### `network_info.security_level`
+The network security level. Should be `5` for practically all networks.  
+*Example value: `5`*
+
+
+#### `network_info.network_key`
+An object containing the network key information.
+
+##### `network_info.network_key.key`
+The 128-bit network key.  
+*Example value: `"01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef"`*
+
+##### `network_info.network_key.tx_counter`
+The network key frame counter, for transmit. Devices store this globally.  
+*Example value: `10741222`*
+
+##### `network_info.network_key.rx_counter`
+The network key frame counter, for receive. Not all device types persist this value.  
+*Example value: `10741222`*
+
+#### `network_info.network_key.sequence`
+The network key sequence number.  
+*Example value: `0`*
+
+
+#### `network_info.tc_link_key`
+An object containing the Trust Center Link Key information.
+
+##### `network_info.tc_link_key.key`
+The 128-bit Trust Center Link Key. Almost always `ZigBeeAlliance09`.  
+*Example value: `"5a:69:67:42:65:65:41:6c:6c:69:61:6e:63:65:30:39"`*
+
+##### `network_info.tc_link_key.tx_counter`
+The APS frame counter, for transmit. Devices store this globally.  
+*Example value: `10741222`*
+
+##### `network_info.tc_link_key.rx_counter`
+The APS frame counter, for receive. Not all device types persist this value.  
+*Example value: `10741222`*
+
+
+#### `network_info.key_table[i]`
+An array of objects containing known APS link keys for devices.
+
+##### `network_info.key_table[i].key`
+The 128-bit APS link key shared with a specific partner.  
+*Example value: `"5a:69:67:42:65:65:41:6c:6c:69:61:6e:63:65:30:39"`*
+
+##### `network_info.key_table[i].tx_counter`
+The APS link key frame counter, for transmit.  
+*Example value: `10741222`*
+
+##### `network_info.key_table[i].rx_counter`
+The APS link key frame counter, for receive.  
+*Example value: `10741222`*
+
+##### `network_info.key_table[i].partner_ieee`
+The APS link key frame counter partner IEEE address.  
+*Example value: `"00:11:22:33:44:55:66:77"`*
+
+
+#### `network_info.__devices_comment`
+This is a special value meant to warn users reading the JSON about missing devices being normal.  
+*Example value: `It is completely normal for this section to be empty or contain only a few devices! The coordinator doesn't need to keep track of every device on a network.`*
+
+#### `network_info.children[i]`
+An array of objects containing the IEEE addresses of children of the current node.  
+*Example value: `"00:11:22:33:44:55:66:77"`*
+
+#### `network_info.nwk_addresses.<ieee>`
+An object of known NWK addresses for devices on the network. Some coordinators have a NWK address cache that can be pre-populated during restore.  
+*Example value: `"00:11:22:33:44:55:66:77": "1234"`*
+
 
 ### `stack_specific`
-The top-level `stack_specific` object contains information that is necessary to restore a backup but using information that is specific to the stack the backup was created from.
+Object meant to store information specific to a particular Zigbee stack, information that cannot be exported into a common format.
 
-Currently the only sub-object is `zstack` with a key containing the Z-Stack Trust Center Link Key seed. Z-Stack uses **Trust Center Link Key Seed** to generate unique link keys for APS encryption. Only seed shift is stored and actual keys are derived from this seed.
+#### `stack_specific.ezsp.hashed_tclk`
+128-bit hashed Trust Center Link Key for the EmberZNet stack. Not all versions support it.  
+*Example value: `"eb:1b:fc:f9:cb:33:d0:d6:09:c4:66:c7:a3:5d:f7:a7"`*
 
-Therefore the structure currently supports the following keys:
-* `zstack`: *object*,
-   * `tclk_seed`: *string* - 128-bit binary-encoded TCLK seed.
+#### `stack_specific.ezsp.tclk_seek`
+128-bit Trust Center Link Key seed for Texas Instruments Z-Stack. Not all versions support it.  
+*Example value: `"eb:1b:fc:f9:cb:33:d0:d6:09:c4:66:c7:a3:5d:f7:a7"`*
 
-*Other stack-specific fields may be added as they are used.*
 
-### `coordinator_ieee`
-Unique 64-bit coordinator adapter IEEE address represented as described in [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes). Example value: `00124b0009d69f77`.
+### `metadata`
+Object meant to store internal metadata for the generating application or library.
+Consider it opaque.
 
-### `pan_id`
-The network's 16-bit Personal Area Network Identifier (PAN ID) will be stored big-endian and encoded as hex, with leading zeroes as per [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes). Example value: `d4a1`.
 
-### `extended_pan_id`
-The 64-bit Extended Personal Area Network Identifier (EPID) stored as described in [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes). Example value: `00124b0009418a6b`.
+### `source`
+Information about the source of the backup.
 
-### `channel`
-The current logical channel of the network will be stored as an integer between 11 and 26.
+#### `source.software`
+Software generating the backup.  
+*Example value: `"zigpy"`*
 
-### `channel_mask`
-The logical channels on which the network can be formed will be stored as an array of numbers, each between 11 and 26. If the network can only be formed on a single channel, the array will contain a single integer.
+#### `source.version`
+Version of the software generating the backup.  
+*Example value: `"1.2.3.4"`*
 
-### `security_level`
-The network security level will be stored as an integer between 0 and 7. Supported values are listed in the table below ([source](https://research.kudelskisecurity.com/2017/11/08/zigbee-security-basics-part-2/)).
 
-| Value | Security Level Identifier |	Security Attributes |	Data Encryption |	Frame Integrity (length of MIC) |
-| - | - | - | - | - |
-| **0** | 0x00 | None | OFF | NO (M = 0) |
-| **1** | 0x01 | MIC-32 | OFF | YES (M=4) |
-| **2** | 0x02 | MIC-64 | OFF | YES (M=8) |
-| **3** | 0x03 | MIC-128 | OFF | YES (M=16) |
-| **4** | 0x04 | ENC | ON | NO (M = 0) |
-| **5** | 0x05 | ENC-MIC-32 | ON | YES (M=4) |
-| **6** | 0x06 | ENC-MIC-64 | ON | YES (M=8) |
-| **7** | 0x07 | ENC-MIC-128 | ON | YES (M=16) |
+### `node_info`
+Information about the node itself.
 
-### `nwk_update_id`
-The network update identifier will be stored as an integer between 0 and 255.
+#### `node_info.nwk`
+The 16-bit network address of the node, big-endian encoded.  
+*Example value: `"1234"`*
 
-### `network_key`
-This object contains vital information related to network key required to restore the network. The following keys are present:
-* `key`: *string* - 128-bit key encoded as described in [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes),
-* `sequence_number`: *number* - value of 0 to 255 indicating the re-keying sequence,
-* `frame_counter`: *number* - numeric value of the 32-bit network frame counter.
+#### `node_info.ieee`
+The 64-bit IEEE address of the node.  
+*Example value: `"00:11:22:33:44:55:66:77"`*
 
-### `devices`
-This is an array of devices relevant to the coordinator: namely children and devices with APS link keys shared with the coordinator. Every object within this array contains the following fields:
-* `ieee_address`: *string* - 64-bit IEEE address of the device encoded as per [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes),
-* `nwk_address`: *string* - 16-bit device network address encoded as per [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes). If a device's current 16-bit network address is not known, the value `null` must be used.
-* `is_child`: *boolean* (optional) - indicates if the device is a child of the coordinator (if the field does not exist - consider `true`),
-* `link_key`: *object* (optional),
-   * `key`: *string* - 128-bit key encoded as described in [Encoding Sequences of Bytes](#Encoding-Sequences-of-Bytes),
-   * `rx_counter`: *number* - value of 32-bit receive frame counter for the link key,
-   * `tx_counter`: *number* - value of 32-bit transmit frame counter for the link key.
+#### `node_info.logical_type`
+The logical type of the node. Must be one of `coordinator`, `router`, or `end_device`.  
+*Example value: `"coordinator"`*
 
-## Samples
-Sample may be found in `samples` directory.
+#### `node_info.model`
+The model of the node.  
+*Example value: `"Home Assistant Connect ZBT-1"`*
 
-| Name | Source | Description |
-| - | - | - |
-| [z2m-sample-1.json](samples/z2m-sample-1.json) | Zigbee2MQTT | Backup taken from CC2538 adapter on a formed network with working APS encryption. |
+#### `node_info.manufacturer`
+The manufacturer of the node.  
+*Example value: `"Nabu Casa"`*
 
-## Models
-Data models for different languages may be found in `models` directory.
-
-## TBD
-* Structures for various languages (TS, Python, ...),
-* Information on migrations.
+#### `node_info.version`
+The software version of the node.  
+*Example value: `"7.4.4.0 build 0"`*
